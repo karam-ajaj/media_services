@@ -1,0 +1,174 @@
+version: '3.4'
+services:
+  traefik:
+    image: traefik:v3.3.4
+    command:
+     - --providers.docker
+     - --providers.docker.exposedbydefault=false
+     # - --providers.docker.swarmmode
+     # - --providers.swarm.endpoint=tcp://127.0.0.1:3377
+     # - --providers.swarm.endpoint=tcp://10.0.0.81:2377
+     - --providers.swarm.endpoint=unix:///var/run/docker.sock
+     - --providers.swarm.exposedByDefault=false
+     # - --providers.swarm.endpoint=tcp://172.17.0.1:2377
+     # - --providers.swarm.endpoint=tcp://10.10.10.81:2377
+     - --providers.swarm.network=traefik-public
+     - --entrypoints.http.address=:80
+     - --entrypoints.https.address=:443
+     - --entrypoints.rdp.address=:3389
+     - --entrypoints.teleport3025.address=:3025
+     - --entryPoints.http.forwardedHeaders.insecure=true
+     - --entryPoints.https.forwardedHeaders.insecure=true
+     - --entryPoints.rdp.forwardedHeaders.insecure=true
+     - --certificatesresolvers.le.acme.email=karam.ajaj@hotmail.com
+     - --certificatesresolvers.le.acme.storage=/certificates/acme.json
+     - --certificatesresolvers.le.acme.tlschallenge=true
+     - --serverstransport.insecureskipverify=true
+     - --providers.docker.allowEmptyServices=true
+     #- --accesslog
+     # enable access log 
+     - --accesslog=true
+     - --accesslog.addinternals
+     - --log
+     - --api
+     - --providers.file.directory=/dynamic-config
+     - --providers.file.watch=true
+     # enable influxdb metrics
+     # - --metrics.influxdb2=true
+     # - --metrics.influxdb2.address=http://influxdb_influxdb:8086
+     # - --metrics.influxdb2.token=tyTQyZI6fiFjgl2Yg008HheRWqu163HNZCfHN93cdll0ke8sN4p7z1d1y9sS2hGwlPqbW5oMW3mnmAAwG3r7SQ==
+     # - --metrics.influxdb2.org=karam-lab
+     # - --metrics.influxdb2.bucket=traefik_metrics
+     # - --metrics.influxdb2.addEntryPointsLabels=true
+     # - --metrics.influxdb2.addrouterslabels=true
+     # - --metrics.influxdb2.addServicesLabels=true
+    #  # enable opentelemetry metrics
+    #  - --metrics.otlp=true
+    #  - --metrics.otlp.addEntryPointsLabels=true
+    #  - --metrics.otlp.addRoutersLabels=true
+    #  - --metrics.otlp.addServicesLabels=true
+    #  - --metrics.otlp.http=true
+    #  - --metrics.otlp.http.endpoint=http://10.10.10.200:4318/v1/metrics
+    #  - --metrics.otlp.grpc=true
+    #  - --metrics.otlp.grpc.endpoint=10.10.10.200:4317
+     ## sablier plgin
+     - --experimental.plugins.sablier.modulename=github.com/sablierapp/sablier
+     - --experimental.plugins.sablier.version=v1.8.1
+     ## staticresponse plugin
+     - --experimental.plugins.staticresponse.modulename=github.com/jdel/staticresponse
+     - --experimental.plugins.staticresponse.version=v0.0.1
+    #  ## enable OpenTelemetry 
+    #  - --tracing.otlp=true
+    #  - --tracing.otlp.http=true
+    #  - --tracing.otlp.http.endpoint=http://10.10.10.200:4318/v1/traces
+    #  - --tracing.otlp.http.tls.insecureSkipVerify=true
+    #  - --tracing.otlp.grpc=true
+    #  - --tracing.otlp.grpc.endpoint=10.10.10.200:4317
+    #  - --tracing.otlp.grpc.insecure=true
+    #  ## enable tracing
+    #  - --tracing=true
+    #  # - --tracing.addinternals
+    #  - --tracing.serviceName=traefik_traefikv3
+    #  - --tracing.sampleRate=0.1
+    #  # - --tracing.globalAttributes.attr1=foo
+    #  # - --tracing.globalAttributes.attr2=bar
+    #  # - --tracing.capturedRequestHeaders[0]=X-CustomHeader
+    #  # - --tracing.capturedResponseHeaders[0]=X-CustomHeader
+     ## add kubernetes provider on pxvm01
+    #  - --providers.kubernetesingress=true
+    #  - --providers.kubernetesingress.endpoint=http://10.10.10.101:8080
+    #  - --providers.kubernetesingress.token=my-token
+    ## add fastProxy experemental on version v3.2.0
+     - --experimental.fastProxy
+    environment:
+      PGID: '911'
+      PUID: '911'
+      TZ: Europe/Amsterdam
+    ports:
+     - 80:80
+     - 443:443
+     - 3025:3025
+     - 3389:3389
+     # - 4317:4317
+     # - target: 2377
+     #   published: 3377
+     #   protocol: tcp
+     #   mode: host
+    volumes:
+     - $configLocation/traefik/certificates:/certificates
+     - $configLocation/traefik/dynamic-config:/dynamic-config
+     - $configLocation/traefik/static-config:/static-config
+     - /var/run/docker.sock:/var/run/docker.sock:ro
+    # extra_hosts:
+    #  - host.docker.internal:172.17.0.1
+    networks:
+     # - host
+     - traefik-public
+    #  - signoz1_default
+    logging:
+      driver: json-file
+    deploy:
+      labels:
+        traefik.http.middlewares.https-redirect.redirectscheme.scheme: https
+        traefik.http.middlewares.admin-auth.basicauth.users: admin:.
+        traefik.http.routers.traefik-public-https.rule: Host(`traefikv3.vnerd.nl`)
+        traefik.http.routers.traefik-public-https.tls: 'true'
+        traefik.http.services.traefik-public.loadbalancer.server.port: '8080'
+        traefik.http.routers.traefik-public-https.service: api@internal
+        traefik.http.routers.traefik-public-http.middlewares: https-redirect
+        traefik.http.routers.traefik-public-http.entrypoints: http
+        traefik.http.routers.traefik-public-https.entrypoints: https
+        traefik.http.middlewares.https-redirect.redirectscheme.permanent: 'true'
+        traefik.constraint-label: traefik-public
+        traefik.http.routers.traefik-public-http.rule: Host(`traefikv3.vnerd.nl`)
+        traefik.http.routers.traefik-public-https.middlewares: authelia@swarm
+        traefik.docker.network: traefik-public
+        traefik.enable: 'true'
+        traefik.http.routers.traefik-public-https.tls.certresolver: le
+        ## tracing
+        # traefik.http.routers.trace-https.tls: 'true'
+        # traefik.http.routers.trace-https.tls.certresolver: le
+        # traefik.http.routers.trace-http.entrypoints: http
+        # traefik.http.services.trace.loadbalancer.server.port: '4318'
+        # traefik.http.routers.trace-https.entrypoints: https
+        # traefik.http.routers.trace-https.rule: Host(`trace.vnerd.nl`)
+        # traefik.constraint-label: traefik-public
+        # traefik.docker.network: traefik-public
+        # traefik.enable: 'true'
+        # traefik.http.routers.trace-http.middlewares: https-redirect
+        # traefik.http.routers.trace-http.rule: Host(`trace.vnerd.nl`)
+        # traefik.docker.lbswarm: 'true'
+      #update_config:
+        #order: start-first
+      placement:
+        constraints:
+         - node.role==manager
+         - node.labels.worker==enabled
+#         - node.hostname==px01
+  # opentelemetry:
+  #   image: otel/opentelemetry-collector:latest
+  #   environment:
+  #     PGID: '911'
+  #     PUID: '911'
+  #     TZ: Europe/Amsterdam
+  #   ports:
+  #    - 4317:4317
+  #    - 55679:55679
+  #   networks:
+  #    - traefik-public
+  #   logging:
+  #     driver: json-file
+  #   deploy:
+  #     placement:
+  #       constraints:
+  #        - node.role==manager
+  #        - node.labels.worker==enabled
+  #        - node.hostname==pxsw01.karam.lab
+networks:
+  traefik-public:
+    external: true
+  # signoz1_default:
+  #   external: true
+  # host:
+  #   external: true
+  #     # name: "host"

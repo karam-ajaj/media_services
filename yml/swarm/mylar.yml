@@ -1,0 +1,39 @@
+version: '3.3'
+services:
+  mylar:
+    image: lscr.io/linuxserver/mylar3:latest
+    environment:
+      # PGID: '911'
+      # PUID: '911'
+      TZ: Europe/Amsterdam
+    volumes:
+     - $configLocation/mylar:/config
+     - $mediaLocation:/data
+    networks:
+    #  - media-network
+     - traefik-public
+    logging:
+      driver: json-file
+    deploy:
+      labels:
+        traefik.http.routers.mylar-http.middlewares: https-redirect
+        traefik.http.routers.mylar-https.tls: 'true'
+        traefik.http.routers.mylar-http.rule: Host(`mylar.$domainName`)
+        # traefik.http.routers.mylar-https.middlewares: authelia
+        traefik.http.routers.mylar-https.rule: Host(`mylar.$domainName`)
+        traefik.http.routers.mylar-https.tls.certresolver: le
+        traefik.http.routers.mylar-http.entrypoints: http
+        traefik.http.services.mylar.loadbalancer.server.port: '8090'
+        traefik.constraint-label: traefik-public
+        traefik.http.routers.mylar-https.entrypoints: https
+        traefik.docker.network: traefik-public
+        traefik.enable: 'true'
+      # placement:
+      #   constraints:
+      #    - node.labels.Arch!=i686
+      #    - node.labels.worker==enabled
+networks:
+  # media-network:
+  #   driver: overlay
+  traefik-public:
+    external: true

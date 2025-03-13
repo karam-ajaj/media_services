@@ -1,0 +1,36 @@
+version: '3.3'
+services:
+  bazarr:
+    image: ghcr.io/hotio/bazarr:latest
+    environment:
+      # PGID: '911'
+      # PUID: '911'
+      TZ: Europe/Amsterdam
+    volumes:
+     - $configLocation/bazarr:/config
+     - $mediaLocation:/data
+    networks:
+     - traefik-public
+    logging:
+      driver: json-file
+    deploy:
+      labels:
+        traefik.http.routers.bazarr-http.entrypoints: http
+        traefik.http.routers.bazarr-https.entrypoints: https
+        traefik.http.routers.bazarr-https.tls: 'true'
+        traefik.http.routers.bazarr-https.tls.certresolver: le
+        traefik.http.routers.bazarr-https.rule: Host(`bazarr.$domainName`)
+        traefik.http.services.bazarr.loadbalancer.server.port: '6767'
+        traefik.constraint-label: traefik-public
+        traefik.http.routers.bazarr-http.rule: Host(`bazarr.$domainName`)
+        traefik.http.routers.bazarr-http.middlewares: https-redirect
+        # traefik.http.routers.bazarr-https.middlewares: authelia
+        traefik.docker.network: traefik-public
+        traefik.enable: 'true'
+      # placement:
+      #   constraints:
+      #    - node.labels.Arch!=i686
+      #    - node.labels.worker==enabled
+networks:
+  traefik-public:
+    external: true

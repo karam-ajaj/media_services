@@ -1,0 +1,43 @@
+version: '3.3'
+services:
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    environment:
+      # PGID: '911'
+      # PUID: '911'
+      TZ: Europe/Amsterdam
+      TORRENTING_PORT: '6881'
+    ports:
+     - 6881:6881
+     - 6881:6881/udp
+    volumes:
+     - $configLocation/qbittorrent:/config
+     - $mediaLocation/torrents:/data/torrents
+    networks:
+    #  - media-network
+     - traefik-public
+    logging:
+      driver: json-file
+    deploy:
+      labels:
+        # traefik.http.routers.qbittorrent-https.middlewares: authelia
+        traefik.http.routers.qbittorrent-https.rule: Host(`qbittorrent.$domainName`)
+        traefik.http.routers.qbittorrent-https.entrypoints: https
+        traefik.http.routers.qbittorrent-http.entrypoints: http
+        traefik.http.routers.qbittorrent-http.rule: Host(`qbittorrent.$domainName`)
+        traefik.http.routers.qbittorrent-http.middlewares: https-redirect
+        traefik.http.services.qbittorrent.loadbalancer.server.port: '8080'
+        traefik.http.routers.qbittorrent-https.tls.certresolver: le
+        traefik.constraint-label: traefik-public
+        traefik.docker.network: traefik-public
+        traefik.enable: 'true'
+        traefik.http.routers.qbittorrent-https.tls: 'true'
+      # placement:
+      #   constraints:
+      #    - node.labels.Arch!=i686
+      #    - node.labels.worker==enabled
+networks:
+  # media-network:
+  #   driver: overlay
+  traefik-public:
+    external: true

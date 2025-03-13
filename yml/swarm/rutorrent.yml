@@ -1,0 +1,41 @@
+version: '3.3'
+services:
+  rutorrent:
+    image: lscr.io/linuxserver/rutorrent:latest
+    environment:
+      # PGID: '911'
+      # PUID: '911'
+      TZ: Europe/Amsterdam
+    ports:
+     - 36258:36258
+    volumes:
+     - $configLocation/rutorrent:/config
+     - $mediaLocation/torrents:/data/torrents
+    networks:
+    #  - media-network
+     - traefik-public
+    logging:
+      driver: json-file
+    deploy:
+      labels:
+        traefik.http.routers.rutorrent-https.entrypoints: https
+        traefik.http.routers.rutorrent-http.entrypoints: http
+        traefik.http.routers.rutorrent-http.middlewares: https-redirect
+        # traefik.http.routers.rutorrent-https.middlewares: authelia
+        traefik.http.services.rutorrent.loadbalancer.server.port: '80'
+        traefik.http.routers.rutorrent-https.rule: Host(`rutorrent.$domainName`)
+        traefik.constraint-label: traefik-public
+        traefik.docker.network: traefik-public
+        traefik.enable: 'true'
+        traefik.http.routers.rutorrent-http.rule: Host(`rutorrent.$domainName`)
+        traefik.http.routers.rutorrent-https.tls.certresolver: le
+        traefik.http.routers.rutorrent-https.tls: 'true'
+      # placement:
+      #   constraints:
+      #    - node.labels.Arch!=i686
+      #    - node.labels.worker==enabled
+networks:
+  # media-network:
+  #   driver: overlay
+  traefik-public:
+    external: true

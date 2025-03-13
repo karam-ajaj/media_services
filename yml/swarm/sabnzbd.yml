@@ -1,0 +1,40 @@
+version: '3.3'
+services:
+  sabnzbd:
+    image: lscr.io/linuxserver/sabnzbd:4.3.3
+    environment:
+      # PGID: '911'
+      # PUID: '911'
+      TZ: Europe/Amsterdam
+    volumes:
+     - $configLocation/sabnzbd:/config
+     - $mediaLocation/usenet:/data/usenet
+     - $mediaLocation/sabnzbd:/data/sabnzbd
+    networks:
+    #  - media-network
+     - traefik-public
+    logging:
+      driver: json-file
+    deploy:
+      labels:
+        # traefik.http.routers.sabnzbd-https.middlewares: authelia
+        traefik.http.routers.sabnzbd-http.middlewares: https-redirect
+        traefik.http.routers.sabnzbd-http.rule: Host(`sabnzbd.$domainName`)
+        traefik.http.routers.sabnzbd-https.tls.certresolver: le
+        traefik.http.routers.sabnzbd-https.rule: Host(`sabnzbd.$domainName`)
+        traefik.http.services.sabnzbd.loadbalancer.server.port: '8080'
+        traefik.constraint-label: traefik-public
+        traefik.http.routers.sabnzbd-https.tls: 'true'
+        traefik.http.routers.sabnzbd-http.entrypoints: http
+        traefik.docker.network: traefik-public
+        traefik.enable: 'true'
+        traefik.http.routers.sabnzbd-https.entrypoints: https
+      # placement:
+      #   constraints:
+      #    - node.labels.Arch!=i686
+      #    - node.labels.worker==enabled
+networks:
+  # media-network:
+  #   driver: overlay
+  traefik-public:
+    external: true

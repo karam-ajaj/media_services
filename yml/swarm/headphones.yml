@@ -1,0 +1,41 @@
+version: '3.3'
+services:
+  headphones:
+    image: lscr.io/linuxserver/headphones:latest
+    environment:
+      # PGID: '911'
+      # PUID: '911'
+      TZ: Europe/Amsterdam
+    volumes:
+     - $configLocation/headphones:/config
+     - $mediaLocation:/data
+    networks:
+    #  - media-network
+     - traefik-public
+    logging:
+      driver: json-file
+    deploy:
+      replicas: 0
+      labels:
+        traefik.http.routers.headphones-http.rule: Host(`headphones.$domainName`)
+        sablier.enable: 'true'
+        traefik.http.routers.headphones-https.tls.certresolver: le
+        traefik.http.routers.headphones-https.entrypoints: https
+        traefik.http.routers.headphones-http.middlewares: https-redirect
+        sablier.group: headphones
+        traefik.constraint-label: traefik-public
+        traefik.docker.lbswarm: 'true'
+        traefik.http.services.headphones.loadbalancer.server.port: '8181'
+        traefik.http.routers.headphones-http.entrypoints: http
+        traefik.http.routers.headphones-https.rule: Host(`headphones.$domainName`)
+        traefik.http.routers.headphones-https.tls: 'true'
+        # traefik.http.routers.headphones-https.middlewares: authelia, headphones-sablier@file
+        traefik.docker.network: traefik-public
+        traefik.enable: 'true'
+      # placement:
+      #   constraints:
+      #    - node.labels.Arch!=i686
+      #    - node.labels.worker==enabled
+networks:
+  traefik-public:
+    external: true

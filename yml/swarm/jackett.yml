@@ -1,0 +1,37 @@
+version: '3.3'
+services:
+  jackett:
+    image: lscr.io/linuxserver/jackett:latest
+    environment:
+      # PGID: '911'
+      # PUID: '911'
+      TZ: Europe/Amsterdam
+    volumes:
+     - $configLocation/jackett:/config
+    networks:
+     - traefik-public
+    logging:
+      driver: json-file
+    deploy:
+      labels:
+        traefik.http.routers.jackett-http.entrypoints: http
+        # traefik.http.routers.jackett-https.middlewares: authelia
+        traefik.http.routers.jackett-https.rule: Host(`jackett.$domainName`)
+        traefik.http.services.jackett.loadbalancer.server.port: '9117'
+        traefik.constraint-label: traefik-public
+        traefik.http.routers.jackett-http.rule: Host(`jackett.$domainName`)
+        traefik.http.routers.jackett-http.middlewares: https-redirect
+        traefik.http.routers.jackett-https.entrypoints: https
+        traefik.docker.network: traefik-public
+        traefik.enable: 'true'
+        traefik.http.routers.jackett-https.tls: 'true'
+        traefik.http.routers.jackett-https.tls.certresolver: le
+      # placement:
+      #   constraints:
+      #    - node.labels.Arch!=i686
+      #    - node.labels.worker==enabled
+networks:
+  # media-network:
+  #   driver: overlay
+  traefik-public:
+    external: true

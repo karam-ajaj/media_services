@@ -1,0 +1,42 @@
+version: '3.3'
+services:
+  ombi:
+    image: lscr.io/linuxserver/ombi:latest
+    environment:
+      # PGID: '911'
+      # PUID: '911'
+      TZ: Europe/Amsterdam
+    volumes:
+     - $configLocation/ombi:/config
+    networks:
+    #  - media-network
+     - traefik-public
+    logging:
+      driver: json-file
+    deploy:
+      replicas: 0
+      labels:
+        sablier.enable: 'true'
+        traefik.http.services.ombi.loadbalancer.server.port: '3579'
+        # traefik.http.routers.ombi-https.middlewares: authelia, ombi-sablier@file
+        traefik.http.routers.ombi-http.rule: Host(`ombi.$domainName`)
+        traefik.http.routers.ombi-https.rule: Host(`ombi.$domainName`)
+        traefik.http.routers.ombi-https.entrypoints: https
+        traefik.http.routers.ombi-https.tls: 'true'
+        traefik.http.routers.ombi-http.middlewares: https-redirect
+        sablier.group: ombi
+        traefik.constraint-label: traefik-public
+        traefik.docker.lbswarm: 'true'
+        traefik.http.routers.ombi-http.entrypoints: http
+        traefik.docker.network: traefik-public
+        traefik.enable: 'true'
+        traefik.http.routers.ombi-https.tls.certresolver: le
+      # placement:
+      #   constraints:
+      #    - node.labels.Arch!=i686
+      #    - node.labels.worker==enabled
+networks:
+  # media-network:
+  #   driver: overlay
+  traefik-public:
+    external: true

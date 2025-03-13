@@ -1,0 +1,42 @@
+version: '3.3'
+services:
+  nzbhydra:
+    image: lscr.io/linuxserver/nzbhydra2:latest
+    environment:
+      # PGID: '911'
+      # PUID: '911'
+      TZ: Europe/Amsterdam
+    volumes:
+     - $configLocation/nzbhydra2:/config
+    networks:
+    #  - media-network
+     - traefik-public
+    logging:
+      driver: json-file
+    deploy:
+      replicas: 0
+      labels:
+        sablier.enable: 'true'
+        traefik.http.routers.nzbhydra2-http.middlewares: https-redirect
+        traefik.http.routers.nzbhydra2-https.entrypoints: https
+        traefik.http.routers.nzbhydra2-http.rule: Host(`nzbhydra.$domainName`)
+        # traefik.http.routers.nzbhydra2-https.middlewares: authelia, nzbhydra-sablier@file
+        traefik.http.routers.nzbhydra2-http.entrypoints: http
+        traefik.http.services.nzbhydra2.loadbalancer.server.port: '5076'
+        traefik.http.routers.nzbhydra2-https.tls.certresolver: le
+        traefik.http.routers.nzbhydra2-https.tls: 'true'
+        sablier.group: nzbhydra
+        traefik.constraint-label: traefik-public
+        traefik.docker.lbswarm: 'true'
+        traefik.http.routers.nzbhydra2-https.rule: Host(`nzbhydra.$domainName`)
+        traefik.docker.network: traefik-public
+        traefik.enable: 'true'
+      # placement:
+      #   constraints:
+      #    - node.labels.Arch!=i686
+      #    - node.labels.worker==enabled
+networks:
+  # media-network:
+  #   driver: overlay
+  traefik-public:
+    external: true

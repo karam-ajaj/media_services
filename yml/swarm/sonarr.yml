@@ -1,0 +1,39 @@
+version: '3.3'
+services:
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:version-4.0.4.1491
+    environment:
+      # PGID: '911'
+      # PUID: '911'
+      TZ: Europe/Amsterdam
+    volumes:
+     - $configLocation/sonarr:/config
+     - $mediaLocation:/data
+    networks:
+    #  - media-network
+     - traefik-public
+    logging:
+      driver: json-file
+    deploy:
+      labels:
+        traefik.http.routers.sonarr-http.rule: Host(`sonarr.$domainName`)
+        traefik.http.routers.sonarr-http.entrypoints: http
+        traefik.http.routers.sonarr-https.entrypoints: https
+        traefik.http.services.sonarr.loadbalancer.server.port: '8989'
+        traefik.constraint-label: traefik-public
+        traefik.http.routers.sonarr-http.middlewares: https-redirect
+        # traefik.http.routers.sonarr-https.middlewares: authelia
+        traefik.http.routers.sonarr-https.tls: 'true'
+        traefik.http.routers.sonarr-https.rule: Host(`sonarr.$domainName`)
+        traefik.http.routers.sonarr-https.tls.certresolver: le
+        traefik.docker.network: traefik-public
+        traefik.enable: 'true'
+      # placement:
+      #   constraints:
+      #    - node.labels.Arch!=i686
+      #    - node.labels.worker==enabled
+networks:
+  # media-network:
+  #   driver: overlay
+  traefik-public:
+    external: true

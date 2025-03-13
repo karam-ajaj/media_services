@@ -1,0 +1,42 @@
+version: '3.3'
+services:
+  lidarr:
+    image: lscr.io/linuxserver/lidarr:latest
+    environment:
+      # PGID: '911'
+      # PUID: '911'
+      TZ: Europe/Amsterdam
+    # ports:
+      # - 3050:8086
+    volumes:
+     - /etc/localtime:/etc/localtime:ro
+     - $configLocation/lidarr:/config
+     - $mediaLocation:/data
+    networks:
+    #  - media-network
+     - traefik-public
+    logging:
+      driver: json-file
+    deploy:
+      labels:
+        traefik.http.routers.lidarr-https.tls.certresolver: le
+        # traefik.http.routers.lidarr-https.middlewares: authelia
+        traefik.http.routers.lidarr-http.entrypoints: http
+        traefik.http.routers.lidarr-http.rule: Host(`lidarr.$domainName`)
+        traefik.http.routers.lidarr-https.tls: 'true'
+        traefik.constraint-label: traefik-public
+        traefik.http.routers.lidarr-https.rule: Host(`lidarr.$domainName`)
+        traefik.http.services.lidarr.loadbalancer.server.port: '8686'
+        traefik.http.routers.lidarr-https.entrypoints: https
+        traefik.http.routers.lidarr-http.middlewares: https-redirect
+        traefik.docker.network: traefik-public
+        traefik.enable: 'true'
+      # placement:
+      #   constraints:
+      #    - node.labels.Arch!=i686
+      #    - node.labels.worker==enabled
+networks:
+  # media-network:
+  #   driver: overlay
+  traefik-public:
+    external: true

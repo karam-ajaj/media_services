@@ -1,0 +1,39 @@
+version: '3.3'
+services:
+  readarr:
+    image: lscr.io/linuxserver/readarr:nightly
+    environment:
+      # PGID: '911'
+      # PUID: '911'
+      TZ: Europe/Amsterdam
+    volumes:
+     - $configLocation/readarr:/config
+     - $mediaLocation:/data
+    networks:
+    #  - media-network
+     - traefik-public
+    logging:
+      driver: json-file
+    deploy:
+      labels:
+        # traefik.http.routers.readarr-https.middlewares: authelia
+        traefik.http.routers.readarr-http.rule: Host(`readarr.$domainName`)
+        traefik.http.services.readarr.loadbalancer.server.port: '8787'
+        traefik.http.routers.readarr-http.middlewares: https-redirect
+        traefik.http.routers.readarr-https.tls: 'true'
+        traefik.http.routers.readarr-https.rule: Host(`readarr.$domainName`)
+        traefik.http.routers.readarr-https.entrypoints: https
+        traefik.http.routers.readarr-https.tls.certresolver: le
+        traefik.constraint-label: traefik-public
+        traefik.docker.network: traefik-public
+        traefik.enable: 'true'
+        traefik.http.routers.readarr-http.entrypoints: http
+      # placement:
+      #   constraints:
+      #    - node.labels.Arch!=i686
+      #    - node.labels.worker==enabled
+networks:
+  # media-network:
+  #   driver: overlay
+  traefik-public:
+    external: true

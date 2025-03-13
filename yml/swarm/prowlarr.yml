@@ -1,0 +1,39 @@
+version: '3.3'
+services:
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:nightly
+    environment:
+      # PGID: '911'
+      # PUID: '911'
+      TZ: Europe/Amsterdam
+    volumes:
+     - $configLocation/prowlarr:/config
+     - $mediaLocation:/data
+    networks:
+    #  - media-network
+     - traefik-public
+    logging:
+      driver: json-file
+    deploy:
+      labels:
+        # traefik.http.routers.prowlarr-https.middlewares: authelia
+        traefik.http.routers.prowlarr-https.tls: 'true'
+        traefik.http.routers.prowlarr-https.tls.certresolver: le
+        traefik.http.routers.prowlarr-http.middlewares: https-redirect
+        traefik.http.routers.prowlarr-http.rule: Host(`prowlarr.$domainName`)
+        traefik.http.routers.prowlarr-http.entrypoints: http
+        traefik.http.routers.prowlarr-https.entrypoints: https
+        traefik.http.services.prowlarr.loadbalancer.server.port: '9696'
+        traefik.constraint-label: traefik-public
+        traefik.http.routers.prowlarr-https.rule: Host(`prowlarr.$domainName`)
+        traefik.docker.network: traefik-public
+        traefik.enable: 'true'
+      # placement:
+      #   constraints:
+      #    - node.labels.Arch!=i686
+      #    - node.labels.worker==enabled
+networks:
+  # media-network:
+  #   driver: overlay
+  traefik-public:
+    external: true

@@ -1,0 +1,43 @@
+version: '3.3'
+services:
+  heimdall:
+    image: lscr.io/linuxserver/heimdall:latest
+    environment:
+      # PGID: '911'
+      # PUID: '911'
+      TZ: Europe/Amsterdam
+    volumes:
+     - $configLocation/heimdall:/config
+     - /etc/localtime:/etc/localtime:ro
+    networks:
+    #  - media-network
+     - traefik-public
+    logging:
+      driver: json-file
+    deploy:
+      # replicas: 0
+      labels:
+        sablier.enable: 'true'
+        traefik.http.services.heimdall.loadbalancer.server.port: '80'
+        traefik.http.routers.heimdall-https.entrypoints: https
+        traefik.http.routers.heimdall-https.tls.certresolver: le
+        traefik.http.routers.heimdall-http.middlewares: https-redirect
+        sablier.group: heimdall
+        traefik.http.routers.heimdall-https.rule: Host(`heimdall.vnerd.nl`)
+        traefik.constraint-label: traefik-public
+        traefik.docker.lbswarm: 'true'
+        traefik.http.routers.heimdall-https.tls: 'true'
+        traefik.http.routers.heimdall-http.entrypoints: http
+        traefik.http.routers.heimdall-http.rule: Host(`heimdall.vnerd.nl`)
+        # traefik.http.routers.heimdall-https.middlewares: heimdall-sablier@file
+        traefik.docker.network: traefik-public
+        traefik.enable: 'true'
+      # placement:
+      #   constraints:
+      #    - node.labels.Arch!=i686
+      #    - node.labels.worker==enabled
+networks:
+  # media-network:
+  #   driver: overlay
+  traefik-public:
+    external: true

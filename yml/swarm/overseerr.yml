@@ -1,0 +1,38 @@
+version: '3.3'
+services:
+  overseerr:
+    image: linuxserver/overseerr:1.33.2
+    environment:
+      # PGID: '911'
+      # PUID: '911'
+      TZ: Europe/Amsterdam
+    volumes:
+     - $configLocation/overseerr/config:/config
+     # - /swarm/config/media_services_config/overseerr/app/overseerr:/app/overseerr
+    networks:
+    #  - media-network
+     - traefik-public
+    logging:
+      driver: json-file
+    deploy:
+      labels:
+        traefik.http.routers.overseerr-http.entrypoints: http
+        traefik.http.routers.overseerr-http.rule: Host(`overseerr.$domainName`)
+        traefik.http.routers.overseerr-https.entrypoints: https
+        traefik.http.routers.overseerr-http.middlewares: https-redirect
+        traefik.http.services.overseerr.loadbalancer.server.port: '5055'
+        traefik.http.routers.overseerr-https.tls.certresolver: le
+        traefik.http.routers.overseerr-https.tls: 'true'
+        traefik.constraint-label: traefik-public
+        traefik.http.routers.overseerr-https.rule: Host(`overseerr.$domainName`)
+        traefik.docker.network: traefik-public
+        traefik.enable: 'true'
+      # placement:
+      #   constraints:
+      #    - node.labels.Arch!=i686
+      #    - node.labels.worker==enabled
+networks:
+  # media-network:
+  #   driver: overlay
+  traefik-public:
+    external: true

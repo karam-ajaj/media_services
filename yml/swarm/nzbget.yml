@@ -1,0 +1,39 @@
+version: '3.3'
+services:
+  nzbget:
+    image: lscr.io/linuxserver/nzbget:latest
+    environment:
+      # PGID: '911'
+      # PUID: '911'
+      TZ: Europe/Amsterdam
+    volumes:
+     - $configLocation/nzbget:/config
+     - $mediaLocation/usenet:/data/usenet
+    networks:
+    #  - media-network
+     - traefik-public
+    logging:
+      driver: json-file
+    deploy:
+      labels:
+        traefik.http.routers.nzbget-https.rule: Host(`nzbget.$domainName`)
+        # traefik.http.routers.nzbget-https.middlewares: authelia
+        traefik.http.routers.nzbget-http.rule: Host(`nzbget.$domainName`)
+        traefik.http.routers.nzbget-https.tls: 'true'
+        traefik.http.routers.nzbget-http.middlewares: https-redirect
+        traefik.http.routers.nzbget-https.tls.certresolver: le
+        traefik.constraint-label: traefik-public
+        traefik.http.routers.nzbget-https.entrypoints: https
+        traefik.http.routers.nzbget-http.entrypoints: http
+        traefik.http.services.nzbget.loadbalancer.server.port: '6789'
+        traefik.docker.network: traefik-public
+        traefik.enable: 'true'
+      # placement:
+      #   constraints:
+      #    - node.labels.Arch!=i686
+      #    - node.labels.worker==enabled
+networks:
+  # media-network:
+  #   driver: overlay
+  traefik-public:
+    external: true
