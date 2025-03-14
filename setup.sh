@@ -11,6 +11,6 @@ echo "initiate docker swarm"
 docker swarm init
 
 echo "creating traefik overlay network"
-docker network create -d external --attachable traefik-public
+docker network create -d overlay --attachable traefik-public
 
 echo "DONE!!"

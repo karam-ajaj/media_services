@@ -68,7 +68,7 @@ do
     # echo "$confirm"
     if [ $confirm == "y" ]; then
         # echo "$serviceName will be installed"
-        envsubst < "./yml/$deploymentType/$serviceName.yml" | docker stack deploy -c - $domain --detach=true
+        envsubst < "./yml/$deploymentType/$serviceName.yml" | docker stack deploy -c - $domainName --detach=true
         # docker stack deploy -c "./yml/$deploymentType/$serviceName.yml" $serviceName
         echo "$serviceName is installed!"
     fi

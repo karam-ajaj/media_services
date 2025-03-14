@@ -8,7 +8,7 @@ services:
      # - --providers.docker.swarmmode
      # - --providers.swarm.endpoint=tcp://127.0.0.1:3377
      # - --providers.swarm.endpoint=tcp://10.0.0.81:2377
-     - --providers.swarm.endpoint=unix:///var/run/docker.sock
+    #  - --providers.swarm.endpoint=unix:///var/run/docker.sock
      - --providers.swarm.exposedByDefault=false
      # - --providers.swarm.endpoint=tcp://172.17.0.1:2377
      # - --providers.swarm.endpoint=tcp://10.10.10.81:2377
@@ -55,8 +55,8 @@ services:
     #  - --experimental.plugins.sablier.modulename=github.com/sablierapp/sablier
     #  - --experimental.plugins.sablier.version=v1.8.1
      ## staticresponse plugin
-     - --experimental.plugins.staticresponse.modulename=github.com/jdel/staticresponse
-     - --experimental.plugins.staticresponse.version=v0.0.1
+    #  - --experimental.plugins.staticresponse.modulename=github.com/jdel/staticresponse
+    #  - --experimental.plugins.staticresponse.version=v0.0.1
     #  ## enable OpenTelemetry 
     #  - --tracing.otlp=true
     #  - --tracing.otlp.http=true
@@ -79,7 +79,7 @@ services:
     #  - --providers.kubernetesingress.endpoint=http://10.10.10.101:8080
     #  - --providers.kubernetesingress.token=my-token
     ## add fastProxy experemental on version v3.2.0
-     - --experimental.fastProxy
+    #  - --experimental.fastProxy
     environment:
       # PGID: '911'
       # PUID: '911'
