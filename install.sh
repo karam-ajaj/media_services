@@ -44,10 +44,16 @@ export mediaLocation=$folderLocation/media
 
 # create locations
 mkdir $folderLocation $configLocation $dataLocation $mediaLocation $mediaLocation/usenet $mediaLocation/torrents $mediaLocation/sabnzbd
+
+
 for serviceName in $(sed 's/\.[^.]*$//' list.txt)
 do
     mkdir $configLocation/$serviceName
     mkdir $dataLocation/$serviceName
+    ## traefik folders
+    mkdir $configLocation/traefik/certificates
+    mkdir $configLocation/traefik/dynamic-config
+    mkdir $configLocation/traefik/static-config
 done
 
 

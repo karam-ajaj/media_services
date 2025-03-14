@@ -52,8 +52,8 @@ services:
     #  - --metrics.otlp.grpc=true
     #  - --metrics.otlp.grpc.endpoint=10.10.10.200:4317
      ## sablier plgin
-     - --experimental.plugins.sablier.modulename=github.com/sablierapp/sablier
-     - --experimental.plugins.sablier.version=v1.8.1
+    #  - --experimental.plugins.sablier.modulename=github.com/sablierapp/sablier
+    #  - --experimental.plugins.sablier.version=v1.8.1
      ## staticresponse plugin
      - --experimental.plugins.staticresponse.modulename=github.com/jdel/staticresponse
      - --experimental.plugins.staticresponse.version=v0.0.1
@@ -81,14 +81,14 @@ services:
     ## add fastProxy experemental on version v3.2.0
      - --experimental.fastProxy
     environment:
-      PGID: '911'
-      PUID: '911'
+      # PGID: '911'
+      # PUID: '911'
       TZ: Europe/Amsterdam
     ports:
      - 80:80
      - 443:443
-     - 3025:3025
-     - 3389:3389
+    #  - 3025:3025
+    #  - 3389:3389
      # - 4317:4317
      # - target: 2377
      #   published: 3377
@@ -111,7 +111,7 @@ services:
       labels:
         traefik.http.middlewares.https-redirect.redirectscheme.scheme: https
         traefik.http.middlewares.admin-auth.basicauth.users: admin:.
-        traefik.http.routers.traefik-public-https.rule: Host(`traefikv3.vnerd.nl`)
+        traefik.http.routers.traefik-public-https.rule: Host(`traefik.$domainName`)
         traefik.http.routers.traefik-public-https.tls: 'true'
         traefik.http.services.traefik-public.loadbalancer.server.port: '8080'
         traefik.http.routers.traefik-public-https.service: api@internal
@@ -120,8 +120,8 @@ services:
         traefik.http.routers.traefik-public-https.entrypoints: https
         traefik.http.middlewares.https-redirect.redirectscheme.permanent: 'true'
         traefik.constraint-label: traefik-public
-        traefik.http.routers.traefik-public-http.rule: Host(`traefikv3.vnerd.nl`)
-        traefik.http.routers.traefik-public-https.middlewares: authelia@swarm
+        traefik.http.routers.traefik-public-http.rule: Host(`traefik.$domainName`)
+        # traefik.http.routers.traefik-public-https.middlewares: authelia@swarm
         traefik.docker.network: traefik-public
         traefik.enable: 'true'
         traefik.http.routers.traefik-public-https.tls.certresolver: le
@@ -140,10 +140,10 @@ services:
         # traefik.docker.lbswarm: 'true'
       #update_config:
         #order: start-first
-      placement:
-        constraints:
-         - node.role==manager
-         - node.labels.worker==enabled
+      # placement:
+      #   constraints:
+      #    - node.role==manager
+      #    - node.labels.worker==enabled
 #         - node.hostname==px01
   # opentelemetry:
   #   image: otel/opentelemetry-collector:latest
